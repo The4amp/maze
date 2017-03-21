@@ -13,7 +13,8 @@ const int HEIGHT_PX{ HEIGHT * CELL_SIZE + 1 };
 const char CELL_EMPTY{ ' ' };
 const char CELL_WALL_HORIZONTAL{ '-' };
 const char CELL_WALL_VERTICAL{ '|' };
-int I;
+const char YOU{ 'Y' };
+const char EXIT{ 'E' };
 
 using namespace std;
 
@@ -68,8 +69,26 @@ void printMap(const array<array<char, WIDTH_PX>, HEIGHT_PX> &map)
     }
 }
 
-void createNewWall(int x, int y, int width, int height,
-    array<array<char, WIDTH_PX>, HEIGHT_PX> &map)
+void setPositionAndExit(array<array<char, WIDTH_PX>, HEIGHT_PX> &map, int &youX, int &youY, int &exitX, int &exitY)
+{
+    youX = rand() % WIDTH;
+    youY = rand() % HEIGHT;
+
+    for(;;)
+    {
+        exitX = rand() % WIDTH;
+        exitY = rand() % HEIGHT;
+        if(exitX != youX || exitY != youY)
+        {
+            break;
+        }
+    }
+
+    map[youY * CELL_SIZE + 1][youX * CELL_SIZE + 1] = YOU;
+    map[exitY * CELL_SIZE + 1][exitX * CELL_SIZE + 1] = EXIT;
+}
+
+void createNewWall(int x, int y, int width, int height, array<array<char, WIDTH_PX>, HEIGHT_PX> &map)
 {
     if (width <= 1 || height <= 1)
     {
@@ -113,22 +132,81 @@ void createNewWall(int x, int y, int width, int height,
             }
         }
     }
-    I++;
-    cout << I << endl;
-    //printMap(map);
-    //int newWidth, newHeight, newX, newY;
     if (isWallHorizontal)
     {
         createNewWall(x, y, width, wallCoordinate / CELL_SIZE - y, map);
-        createNewWall(x, wallCoordinate / CELL_SIZE, width, height - wallCoordinate / CELL_SIZE, map);
+        createNewWall(x, wallCoordinate / CELL_SIZE, width, height - wallCoordinate / CELL_SIZE + y, map);
     }
     else
     {
         createNewWall(x, y, wallCoordinate / CELL_SIZE - x, height, map);
-        createNewWall(wallCoordinate / CELL_SIZE, y, width - wallCoordinate / CELL_SIZE, height, map);
+        createNewWall(wallCoordinate / CELL_SIZE, y, width - wallCoordinate / CELL_SIZE + x, height, map);
     }
-    I--;
-    cout << I << endl;
+}
+
+bool move(array<array<char, WIDTH_PX>, HEIGHT_PX> &map, int &youX, int &youY, string way)
+{
+    for (int i = 0; i < way.length(); i++)
+    {
+        if(way[i] == 'w')
+        {
+            if(map[youY * CELL_SIZE][youX * CELL_SIZE + 1] == '-')
+            {
+                cout << "You lose!!!" << endl;
+                return false;
+            }
+            else
+            {
+                map[youY * CELL_SIZE + 1][youX * CELL_SIZE + 1] = ' ';
+                youY--;
+                map[youY * CELL_SIZE + 1][youX * CELL_SIZE + 1] = YOU;
+            }
+        }
+        else if(way[i] == 's')
+        {
+            if(map[(youY + 1) * CELL_SIZE][youX * CELL_SIZE + 1] == '-')
+            {
+                cout << "You lose!!!" << endl;
+                return false;
+            }
+            else
+            {
+                map[youY * CELL_SIZE + 1][youX * CELL_SIZE + 1] = ' ';
+                youY++;
+                map[youY * CELL_SIZE + 1][youX * CELL_SIZE + 1] = YOU;
+            }
+        }
+        if(way[i] == 'd')
+        {
+            if(map[youY * CELL_SIZE + 1][(youX + 1) * CELL_SIZE] == '|')
+            {
+                cout << "You lose!!!" << endl;
+                return false;
+            }
+            else
+            {
+                map[youY * CELL_SIZE + 1][youX * CELL_SIZE + 1] = ' ';
+                youX++;
+                map[youY * CELL_SIZE + 1][youX * CELL_SIZE + 1] = YOU;
+            }
+        }
+        if(way[i] == 'a')
+        {
+            if(map[youY * CELL_SIZE + 1][youX * CELL_SIZE] == '|')
+            {
+                cout << "You lose!!!" << endl;
+                return false;
+            }
+            else
+            {
+                map[youY * CELL_SIZE + 1][youX * CELL_SIZE + 1] = ' ';
+                youX--;
+                map[youY * CELL_SIZE + 1][youX * CELL_SIZE + 1] = YOU;
+            }
+        }
+    }
+    printMap(map);
+    return true;
 }
 
 int main()
@@ -141,8 +219,27 @@ int main()
 
     createNewWall(0, 0, WIDTH, HEIGHT, map);
 
+    int youY, youX, exitY, exitX;
+
+    setPositionAndExit(map, youX, youY, exitX, exitY);
+
     printMap(map);
 
-    //system("pause");
+    for(;;)
+    {
+        string way = "";
+        cout << "Input your way -> ";
+        cin >> way;
+        if(!move(map, youX, youY, way))
+        {
+            break;
+        }
+        if(exitX == youX && exitY == youY)
+        {
+            cout << "YOU WIN!!!" << endl;
+            break;
+        }
+    }
+
     return 0;
 }
